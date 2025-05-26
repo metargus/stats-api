@@ -312,7 +312,6 @@ components:
       title: Assist Parameters
       description: Parameters for an assist action
       required:
-        - receiverId
         - actionType
       additionalProperties: false
       properties:
@@ -352,7 +351,6 @@ components:
       description: Parameters for a foul action
       required:
         - type
-        - receiverId
         - committerType
         - actionType
       additionalProperties: false
@@ -379,7 +377,7 @@ components:
           example: "478329"
         committerType:
           type: string
-          enum: [PLAYER, TEAM]
+          enum: [PLAYER, COACH, BENCH, BENCH_PLAYER]
           description: Entity who committed the foul
           example: "PLAYER"
 
@@ -412,7 +410,6 @@ components:
       title: Steal Parameters
       description: Parameters for a steal action
       required:
-        - receiverId
         - actionType
       additionalProperties: false
       properties:
@@ -431,7 +428,6 @@ components:
       title: Block Parameters
       description: Parameters for a block action
       required:
-        - receiverId
         - actionType
       additionalProperties: false
       properties:
