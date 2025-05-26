@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: Basketball Play-by-Play API
+  description: API for tracking basketball game play-by-play data
+  version: 1.0.0
+security:
+  - bearerAuth: []
+
+paths:
+  /stats/orgs/{orgId}/game-status:
+    get:
+      summary: Get the status of a game
+      operationId: getGameStatus
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          description: The organization (club or league) identifier generated and assigned by the implementer of this API
+          schema:
+            type: string
+        - name: clientGameId
+          in: query
+          required: true
+          description:  events by the identifier the client has assigned to the game internally in their organisation
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved game status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  gameId:
+                    type: string
+                    description: The API implementer game identifier
+                  clientGameId:
+                    type: string
+                    description: The client-assigned game identifier
+                  status:
+                    type: string
+                    description: The current status of the game
+                    enum: [upcoming, live, completed, cancelled]
+                required:
+                  - gameId
+                  - clientGameId
+                  - status
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stats/orgs/{orgId}/play-by-play:
+    get:
+      summary: Get play-by-play events
+      description: "Returns the complete play-by-play data for a finished game. **IMPORTANT: This endpoint should only be called after a game is completed.** Calling this endpoint during an ongoing game may result in incomplete data."
+      operationId: getPlayByPlayEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          description: The organization (club or league) identifier generated and assigned by the implementer of this API
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 50
+            pattern: "^[a-z0-9-]+$"
+            example: "acme-sports"
+        - name: clientGameId
+          in: query
+          description: Filter events by the identifier the client has assigned to the game internally in their organisation
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 50
+            example: "8614"
+      responses:
+        '200':
+          description: A list of play-by-play events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlayByPlayEvent'
+                minItems: 0
+                uniqueItems: true
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token issued by the implementer of the API
+  schemas:
+    PlayByPlayEvent:
+      type: object
+      title: Play-by-Play Event
+      description: Represents a single basketball action during a game
+      required:
+        - flowId
+        - actionId
+        - period
+        - clock
+        - gameTime
+        - actionType
+        - createdAt
+      additionalProperties: false
+      properties:
+        flowId:
+          type: string
+          format: uuid
+          description: Unique identifier for the action flow, can be used to reference related actions
+          example: "930812d5-436e-4ec4-b0c7-83d5b9799be8"
+        actionId:
+          type: string
+          format: uuid
+          description: Identifier for the action
+          example: "268f1578-ead5-4fae-81ff-f4bea723333e"
+        period:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Period of the game when the action happened (5+ for overtime)
+          example: 2
+        clock:
+          type: string
+          pattern: "^[0-9]{2}:[0-9]{2}$"
+          description: Time remaining in the period (MM:SS)
+          example: "02:34"
+        gameTime:
+          type: string
+          pattern: "^[0-9]{2}:[0-9]{2}$"
+          description: Absolute game time (MM:SS)
+          example: "27:18"
+        actionType:
+          type: string
+          enum:
+            - ASSIST
+            - BLOCK
+            - CHALLENGE
+            - FOUL
+            - JUMPBALL
+            - REBOUND
+            - SHOT
+            - STEAL
+            - SUBSTITUTION
+            - TIMEOUT
+            - TURNOVER
+            - PERIOD_CHANGE
+          description: Type of basketball action
+          example: "SHOT"
+        teamId:
+          type: string
+          nullable: true
+          description: >
+            Identifier for the team that committed the action. Required when:
+            1. committerId is not null
+            2. actionType is SUBSTITUTION, TIMEOUT (team actions)
+            Must be null when actionType is PERIOD_CHANGE or JUMPBALL
+          example: "203"
+        committerId:
+          type: string
+          nullable: true
+          description: >
+            Identifier for the player who performed the action. Requirements:
+            1. MUST be populated when actionType is ASSIST, BLOCK, SHOT, STEAL (player actions)
+            2. MUST be populated when actionType is FOUL and params.committerType is PLAYER or BENCH_PLAYER
+            3. MUST be null when actionType is SUBSTITUTION, TIMEOUT (team actions)
+            4. MUST be null when actionType is FOUL and params.committerType is COACH or BENCH
+            5. Optional when actionType is REBOUND or TURNOVER (can be team or player action)
+          example: "461267"
+        params:
+          $ref: '#/components/schemas/ActionParams'
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the action was recorded
+          example: "2023-04-15T18:23:47Z"
+
+    ActionParams:
+      title: Action Parameters
+      description: Parameters specific to each type of basketball action
+      oneOf:
+        - $ref: '#/components/schemas/AssistParams'
+        - $ref: '#/components/schemas/BlockParams'
+        - $ref: '#/components/schemas/EmptyParams'
+        - $ref: '#/components/schemas/FoulParams'
+        - $ref: '#/components/schemas/JumpballParams'
+        - $ref: '#/components/schemas/PeriodChangeParams'
+        - $ref: '#/components/schemas/ReboundParams'
+        - $ref: '#/components/schemas/ShotParams'
+        - $ref: '#/components/schemas/StealParams'
+        - $ref: '#/components/schemas/SubstitutionParams'
+      discriminator:
+        propertyName: actionType
+        mapping:
+          ASSIST: '#/components/schemas/AssistParams'
+          BLOCK: '#/components/schemas/BlockParams'
+          CHALLENGE: '#/components/schemas/EmptyParams'
+          FOUL: '#/components/schemas/FoulParams'
+          JUMPBALL: '#/components/schemas/JumpballParams'
+          PERIOD_CHANGE: '#/components/schemas/PeriodChangeParams'
+          REBOUND: '#/components/schemas/ReboundParams'
+          SHOT: '#/components/schemas/ShotParams'
+          STEAL: '#/components/schemas/StealParams'
+          SUBSTITUTION: '#/components/schemas/SubstitutionParams'
+          TIMEOUT: '#/components/schemas/EmptyParams'
+          TURNOVER: '#/components/schemas/EmptyParams'
+
+    ShotParams:
+      type: object
+      title: Shot Parameters
+      description: Parameters for a shot attempt
+      required:
+        - made
+        - points
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["SHOT"]
+          description: Fixed value indicating this is a shot action
+          example: "SHOT"
+        x:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Normalized x-axis position of the shot, ranges from 0 to 1
+          example: 0.24
+        y:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Normalized y-axis position of the shot, ranges from 0 to 1
+          example: 0.13
+        made:
+          type: boolean
+          description: True for a made shot, False for a miss
+          example: true
+        points:
+          type: integer
+          enum: [1, 2, 3]
+          description: Value of the shot. A free throw is represented as a shot with params.points set to 1
+          example: 3
+
+    AssistParams:
+      type: object
+      title: Assist Parameters
+      description: Parameters for an assist action
+      required:
+        - receiverId
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["ASSIST"]
+          description: Fixed value indicating this is an assist action
+          example: "ASSIST"
+        receiverId:
+          type: string
+          description: Player who received the assist
+          example: "512893"
+
+    ReboundParams:
+      type: object
+      title: Rebound Parameters
+      description: Parameters for a rebound action
+      required:
+        - type
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["REBOUND"]
+          description: Fixed value indicating this is a rebound action
+          example: "REBOUND"
+        type:
+          type: string
+          enum: [DEFENSIVE, OFFENSIVE]
+          description: Type of rebound
+          example: "DEFENSIVE"
+
+    FoulParams:
+      type: object
+      title: Foul Parameters
+      description: Parameters for a foul action
+      required:
+        - type
+        - receiverId
+        - committerType
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["FOUL"]
+          description: Fixed value indicating this is a foul action
+          example: "FOUL"
+        type:
+          type: string
+          enum:
+            - SHOOTING
+            - PERSONAL
+            - TECHNICAL
+            - OFFENSIVE
+            - UNSPORTSMANLIKE
+            - DISQUALIFYING
+          description: Type of foul
+          example: "SHOOTING"
+        receiverId:
+          type: string
+          description: Id of the player who was fouled
+          example: "478329"
+        committerType:
+          type: string
+          enum: [PLAYER, TEAM]
+          description: Entity who committed the foul
+          example: "PLAYER"
+
+    SubstitutionParams:
+      type: object
+      title: Substitution Parameters
+      description: Parameters for a player substitution
+      required:
+        - inPlayerId
+        - outPlayerId
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["SUBSTITUTION"]
+          description: Fixed value indicating this is a substitution action
+          example: "SUBSTITUTION"
+        inPlayerId:
+          type: string
+          description: Id of the player who entered the game
+          example: "539018"
+        outPlayerId:
+          type: string
+          description: Id of the player who left the game
+          example: "461267"
+
+    StealParams:
+      type: object
+      title: Steal Parameters
+      description: Parameters for a steal action
+      required:
+        - receiverId
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["STEAL"]
+          description: Fixed value indicating this is a steal action
+          example: "STEAL"
+        receiverId:
+          type: string
+          description: Player who lost the ball
+          example: "521743"
+
+    BlockParams:
+      type: object
+      title: Block Parameters
+      description: Parameters for a block action
+      required:
+        - receiverId
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["BLOCK"]
+          description: Fixed value indicating this is a block action
+          example: "BLOCK"
+        receiverId:
+          type: string
+          description: Player whose shot was blocked
+          example: "493817"
+
+    JumpballParams:
+      type: object
+      title: Jump Ball Parameters
+      description: Parameters for a jump ball action
+      required:
+        - winnerTeamId
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["JUMPBALL"]
+          description: Fixed value indicating this is a jump ball action
+          example: "JUMPBALL"
+        winnerTeamId:
+          type: string
+          description: The id of the team that won the jumpball
+          example: "203"
+
+    PeriodChangeParams:
+      type: object
+      title: Period Change Parameters
+      description: Parameters for a period change event
+      required:
+        - status
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: ["PERIOD_CHANGE"]
+          description: Fixed value indicating this is a period change action
+          example: "PERIOD_CHANGE"
+        status:
+          type: string
+          enum: [START, END]
+          description: State of the period
+          example: "START"
+
+    EmptyParams:
+      type: object
+      title: Empty Parameters
+      description: No parameters required for this action type
+      required:
+        - actionType
+      additionalProperties: false
+      properties:
+        actionType:
+          type: string
+          enum: [CHALLENGE, TIMEOUT, TURNOVER]
+          description: Type of action with no additional parameters
+          example: "TIMEOUT"
+
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Game with id "1234" of org with id "5123" was not found
+      required:
+        - code
+        - message
