@@ -283,14 +283,8 @@ components:
       required:
         - made
         - points
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["SHOT"]
-          description: Fixed value indicating this is a shot action
-          example: "SHOT"
         x:
           type: number
           format: float
@@ -319,15 +313,8 @@ components:
       type: object
       title: Assist Parameters
       description: Parameters for an assist action
-      required:
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["ASSIST"]
-          description: Fixed value indicating this is an assist action
-          example: "ASSIST"
         receiverId:
           type: string
           description: Player who received the assist
@@ -339,14 +326,8 @@ components:
       description: Parameters for a rebound action
       required:
         - type
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["REBOUND"]
-          description: Fixed value indicating this is a rebound action
-          example: "REBOUND"
         type:
           type: string
           enum: [DEFENSIVE, OFFENSIVE]
@@ -360,14 +341,8 @@ components:
       required:
         - type
         - committerType
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["FOUL"]
-          description: Fixed value indicating this is a foul action
-          example: "FOUL"
         type:
           type: string
           enum:
@@ -396,14 +371,8 @@ components:
       required:
         - inPlayerId
         - outPlayerId
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["SUBSTITUTION"]
-          description: Fixed value indicating this is a substitution action
-          example: "SUBSTITUTION"
         inPlayerId:
           type: string
           description: Id of the player who entered the game
@@ -417,15 +386,8 @@ components:
       type: object
       title: Steal Parameters
       description: Parameters for a steal action
-      required:
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["STEAL"]
-          description: Fixed value indicating this is a steal action
-          example: "STEAL"
         receiverId:
           type: string
           description: Player who lost the ball
@@ -435,15 +397,8 @@ components:
       type: object
       title: Block Parameters
       description: Parameters for a block action
-      required:
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["BLOCK"]
-          description: Fixed value indicating this is a block action
-          example: "BLOCK"
         receiverId:
           type: string
           description: Player whose shot was blocked
@@ -455,14 +410,8 @@ components:
       description: Parameters for a jump ball action
       required:
         - winnerTeamId
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["JUMPBALL"]
-          description: Fixed value indicating this is a jump ball action
-          example: "JUMPBALL"
         winnerTeamId:
           type: string
           description: The id of the team that won the jumpball
@@ -475,14 +424,8 @@ components:
       required:
         - phaseType
         - status
-        - actionType
       additionalProperties: false
       properties:
-        actionType:
-          type: string
-          enum: ["TIMING"]
-          description: Fixed value indicating this is a period change action
-          example: "TIMING"
         phaseType:
           type: string
           enum: ["PERIOD", "TIMEOUT"]
@@ -498,15 +441,7 @@ components:
       type: object
       title: Empty Parameters
       description: No parameters required for this action type
-      required:
-        - actionType
       additionalProperties: false
-      properties:
-        actionType:
-          type: string
-          enum: [TIMEOUT, TURNOVER]
-          description: Type of action with no additional parameters
-          example: "TIMEOUT"
 
     Error:
       type: object
