@@ -490,7 +490,7 @@ components:
       properties:
         actionType:
           type: string
-          enum: [CHALLENGE, TIMEOUT, TURNOVER]
+          enum: [TIMEOUT, TURNOVER]
           description: Type of action with no additional parameters
           example: "TIMEOUT"
 
