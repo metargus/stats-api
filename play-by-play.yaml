@@ -207,7 +207,7 @@ components:
             - SUBSTITUTION
             - TIMEOUT
             - TURNOVER
-            - PERIOD_CHANGE
+            - TIMING
           description: Type of basketball action
           example: "SHOT"
         teamId:
@@ -217,7 +217,7 @@ components:
             Identifier for the team that committed the action. Required when:
             1. committerId is not null
             2. actionType is SUBSTITUTION, TIMEOUT (team actions)
-            Must be null when actionType is PERIOD_CHANGE or JUMPBALL
+            Must be null when actionType is TIMING or JUMPBALL
           example: "203"
         committerId:
           type: string
@@ -255,7 +255,7 @@ components:
         - $ref: '#/components/schemas/EmptyParams'
         - $ref: '#/components/schemas/FoulParams'
         - $ref: '#/components/schemas/JumpballParams'
-        - $ref: '#/components/schemas/PeriodChangeParams'
+        - $ref: '#/components/schemas/TimingParams'
         - $ref: '#/components/schemas/ReboundParams'
         - $ref: '#/components/schemas/ShotParams'
         - $ref: '#/components/schemas/StealParams'
@@ -268,7 +268,7 @@ components:
           CHALLENGE: '#/components/schemas/EmptyParams'
           FOUL: '#/components/schemas/FoulParams'
           JUMPBALL: '#/components/schemas/JumpballParams'
-          PERIOD_CHANGE: '#/components/schemas/PeriodChangeParams'
+          TIMING: '#/components/schemas/TimingParams'
           REBOUND: '#/components/schemas/ReboundParams'
           SHOT: '#/components/schemas/ShotParams'
           STEAL: '#/components/schemas/StealParams'
@@ -468,23 +468,29 @@ components:
           description: The id of the team that won the jumpball
           example: "203"
 
-    PeriodChangeParams:
+    TimingParams:
       type: object
-      title: Period Change Parameters
+      title: Timing Parameters
       description: Parameters for a period change event
       required:
+        - phaseType
         - status
         - actionType
       additionalProperties: false
       properties:
         actionType:
           type: string
-          enum: ["PERIOD_CHANGE"]
+          enum: ["TIMING"]
           description: Fixed value indicating this is a period change action
-          example: "PERIOD_CHANGE"
+          example: "TIMING"
+        phaseType:
+          type: string
+          enum: ["PERIOD", "TIMEOUT"]
+          description: Whether this timing event is about a period or a timeout
+          example: "TIMEOUT"
         status:
           type: string
-          enum: [START, END]
+          enum: ["START", "END"]
           description: State of the period
           example: "START"
 
