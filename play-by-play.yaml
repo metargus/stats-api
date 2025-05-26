@@ -232,6 +232,14 @@ components:
           example: "461267"
         params:
           $ref: '#/components/schemas/ActionParams'
+        fastBreak:
+          type: boolean
+          nullable: true
+          description: Whether this action happens in a fast break
+        needsReview:
+          type: boolean
+          nullable: true
+          description: Whether this action needs to be reviewed
         createdAt:
           type: string
           format: date-time
