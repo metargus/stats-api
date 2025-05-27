@@ -27,7 +27,7 @@ paths:
             example: "1592349"
       responses:
         '204':
-           description: Play-by-play data retrieved successfully
+           description: Play-by-play data submitted successfully
         '400':
           description: Bad request
           content:
