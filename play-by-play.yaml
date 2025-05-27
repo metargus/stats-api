@@ -77,44 +77,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /stats/orgs/{orgId}/play-by-play:
-    get:
+  /stats/matches/{matchId}/play-by-play:
+    post:
       summary: Get play-by-play events
       description: "Returns the complete play-by-play data for a finished game. **IMPORTANT: This endpoint should only be called after a game is completed.** Calling this endpoint during an ongoing game may result in incomplete data."
       operationId: getPlayByPlayEvents
       security:
         - bearerAuth: []
       parameters:
-        - name: orgId
+        - name: matchId
           in: path
           required: true
-          description: The organization (club or league) identifier generated and assigned by the implementer of this API
+          description: The unique identifier for the match
           schema:
             type: string
             minLength: 3
             maxLength: 50
             pattern: "^[a-z0-9-]+$"
-            example: "acme-sports"
-        - name: clientGameId
-          in: query
-          description: Filter events by the identifier the client has assigned to the game internally in their organisation
-          required: true
-          schema:
-            type: string
-            minLength: 1
-            maxLength: 50
-            example: "8614"
+            example: "1592349"
       responses:
-        '200':
-          description: A list of play-by-play events
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PlayByPlayEvent'
-                minItems: 0
-                uniqueItems: true
+        '204':
+           description: Play-by-play data retrieved successfully
         '400':
           description: Bad request
           content:
